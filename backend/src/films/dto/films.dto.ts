@@ -25,3 +25,7 @@ export class FilmDto {
 export class GetFilmsDto extends ListDto<FilmDto> {}
 
 export class GetScheduleDto extends ListDto<ScheduleDto> {}
+
+export class FilmWithScheduleDto extends FilmDto {
+  schedule: ScheduleDto[];
+}
