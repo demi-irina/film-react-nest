@@ -22,4 +22,22 @@ export class MongoFilmsRepository implements FilmsRepository {
     const film = await this.filmModel.findOne({ id }).lean<Film>().exec();
     return film ? toFilmWithScheduleDto(film) : null;
   }
+
+  async addTakenSeat(
+    filmId: string,
+    sessionId: string,
+    seat: string,
+  ): Promise<boolean> {
+    const result = await this.filmModel
+      .updateOne(
+        {
+          id: filmId,
+          schedule: { $elemMatch: { id: sessionId, taken: { $ne: seat } } },
+        },
+        { $addToSet: { 'schedule.$.taken': seat } },
+      )
+      .exec();
+
+    return result.modifiedCount > 0;
+  }
 }
