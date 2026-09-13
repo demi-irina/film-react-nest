@@ -40,4 +40,17 @@ export class MongoFilmsRepository implements FilmsRepository {
 
     return result.modifiedCount > 0;
   }
+
+  async removeTakenSeat(
+    filmId: string,
+    sessionId: string,
+    seat: string,
+  ): Promise<void> {
+    await this.filmModel
+      .updateOne(
+        { id: filmId, schedule: { $elemMatch: { id: sessionId } } },
+        { $pull: { 'schedule.$.taken': seat } },
+      )
+      .exec();
+  }
 }

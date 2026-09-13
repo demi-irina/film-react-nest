@@ -33,24 +33,50 @@ export class OrderService {
       this.assertSeatIsFree(ticket, session);
     }
 
-    const items: TicketResultDto[] = [];
-    for (const ticket of tickets) {
-      const isBooked = await this.filmsRepository.addTakenSeat(
-        ticket.film,
-        ticket.session,
-        OrderService.getPlace(ticket),
-      );
-
-      if (!isBooked) {
-        throw new BadRequestException({
-          error: `Место ${OrderService.getPlace(ticket)} уже занято`,
-        });
-      }
-
-      items.push({ ...ticket, id: randomUUID() });
-    }
+    const items = await this.bookTickets(tickets);
 
     return { total: items.length, items };
+  }
+
+  private async bookTickets(tickets: TicketDto[]): Promise<TicketResultDto[]> {
+    const items: TicketResultDto[] = [];
+
+    try {
+      for (const ticket of tickets) {
+        const isBooked = await this.filmsRepository.addTakenSeat(
+          ticket.film,
+          ticket.session,
+          OrderService.getPlace(ticket),
+        );
+
+        if (!isBooked) {
+          throw new BadRequestException({
+            error: `Место ${OrderService.getPlace(ticket)} уже занято`,
+          });
+        }
+
+        items.push({ ...ticket, id: randomUUID() });
+      }
+    } catch (error) {
+      await this.releaseSeats(items);
+      throw error;
+    }
+
+    return items;
+  }
+
+  private async releaseSeats(tickets: TicketDto[]): Promise<void> {
+    for (const ticket of tickets) {
+      try {
+        await this.filmsRepository.removeTakenSeat(
+          ticket.film,
+          ticket.session,
+          OrderService.getPlace(ticket),
+        );
+      } catch {
+        // Откат выполняется по мере возможности
+      }
+    }
   }
 
   private static getPlace(ticket: TicketDto): string {
