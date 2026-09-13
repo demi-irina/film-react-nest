@@ -25,14 +25,7 @@ export class OrderService {
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<GetOrderDto> {
-    const tickets = createOrderDto?.tickets;
-
-    if (!Array.isArray(tickets) || tickets.length === 0) {
-      throw new BadRequestException({ error: 'Список билетов пуст' });
-    }
-
-    tickets.forEach((ticket) => this.assertTicketIsValid(ticket));
-    this.assertNoDuplicates(tickets);
+    const tickets = createOrderDto.tickets;
 
     for (const ticket of tickets) {
       const session = await this.findSession(ticket);
@@ -42,13 +35,13 @@ export class OrderService {
 
     const items: TicketResultDto[] = [];
     for (const ticket of tickets) {
-      const booked = await this.filmsRepository.addTakenSeat(
+      const isBooked = await this.filmsRepository.addTakenSeat(
         ticket.film,
         ticket.session,
         OrderService.getPlace(ticket),
       );
 
-      if (!booked) {
+      if (!isBooked) {
         throw new BadRequestException({
           error: `Место ${OrderService.getPlace(ticket)} уже занято`,
         });
@@ -62,39 +55,6 @@ export class OrderService {
 
   private static getPlace(ticket: TicketDto): string {
     return `${ticket.row}:${ticket.seat}`;
-  }
-
-  private assertTicketIsValid(ticket: TicketDto): void {
-    if (
-      typeof ticket?.film !== 'string' ||
-      typeof ticket?.session !== 'string'
-    ) {
-      throw new BadRequestException({
-        error: 'Не указан фильм или сеанс',
-      });
-    }
-
-    if (!Number.isInteger(ticket.row) || !Number.isInteger(ticket.seat)) {
-      throw new BadRequestException({
-        error: `Некорректные координаты кресла: ${OrderService.getPlace(ticket)}`,
-      });
-    }
-  }
-
-  private assertNoDuplicates(tickets: TicketDto[]): void {
-    const places = new Set<string>();
-
-    for (const ticket of tickets) {
-      const key = `${ticket.film}:${ticket.session}:${OrderService.getPlace(ticket)}`;
-
-      if (places.has(key)) {
-        throw new BadRequestException({
-          error: `Место ${OrderService.getPlace(ticket)} указано в заказе дважды`,
-        });
-      }
-
-      places.add(key);
-    }
   }
 
   private async findSession(ticket: TicketDto): Promise<ScheduleDto> {

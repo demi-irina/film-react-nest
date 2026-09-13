@@ -64,6 +64,7 @@ describe('AppController (e2e)', () => {
           {
             film: 'unknown-film',
             session: 'unknown-session',
+            daytime: '2026-01-01T10:00:00.000Z',
             row: 1,
             seat: 1,
             price: 350,
