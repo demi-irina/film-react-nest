@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
 import * as path from 'node:path';
 
-import { AppConfig, AppConfigModule } from './app.config.provider';
+import { AppConfigModule } from './app.config.provider';
 import { createValidationPipe } from './app.validation.pipe';
 import { FilmsModule } from './films/films.module';
 import { OrderModule } from './order/order.module';
+import { RepositoryModule } from './repository/repository.module';
 
 @Module({
   imports: [
@@ -17,11 +17,7 @@ import { OrderModule } from './order/order.module';
       cache: true,
     }),
     AppConfigModule,
-    MongooseModule.forRootAsync({
-      imports: [AppConfigModule],
-      inject: ['CONFIG'],
-      useFactory: (config: AppConfig) => ({ uri: config.database.url }),
-    }),
+    RepositoryModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: path.join(__dirname, '..', 'public'),
       serveRoot: '/',

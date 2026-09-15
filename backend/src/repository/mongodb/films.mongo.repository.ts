@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { FilmDto, FilmWithScheduleDto } from '../films/dto/films.dto';
-import { Film, FilmDocument } from '../films/films.schema';
-import { toFilmDto, toFilmWithScheduleDto } from './films.converter';
-import { FilmsRepository } from './films.repository';
+import { FilmDto, FilmWithScheduleDto } from '../../films/dto/films.dto';
+import { Film, FilmDocument } from '../../films/films.schema';
+import { toFilmDto, toFilmWithScheduleDto } from './films.mongo.converter';
+import { FilmsRepository } from '../films.repository';
 
 @Injectable()
 export class MongoFilmsRepository implements FilmsRepository {
