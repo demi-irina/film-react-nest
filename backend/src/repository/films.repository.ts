@@ -10,4 +10,9 @@ export interface FilmsRepository {
     sessionId: string,
     seat: string,
   ): Promise<boolean>;
+  removeTakenSeat(
+    filmId: string,
+    sessionId: string,
+    seat: string,
+  ): Promise<void>;
 }
