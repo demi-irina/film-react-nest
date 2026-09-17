@@ -2,8 +2,8 @@ import {
   FilmDto,
   FilmWithScheduleDto,
   ScheduleDto,
-} from '../films/dto/films.dto';
-import { Film, Schedule } from '../films/films.schema';
+} from '../../films/dto/films.dto';
+import { Film, Schedule } from '../../films/films.schema';
 
 export function toScheduleDto(schedule: Schedule): ScheduleDto {
   return {

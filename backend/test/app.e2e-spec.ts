@@ -20,6 +20,9 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
+  const MISSING_FILM_ID = '00000000-0000-0000-0000-000000000000';
+  const MISSING_SESSION_ID = '11111111-1111-1111-1111-111111111111';
+
   const order = (tickets: unknown[]) => ({
     email: 'test@test.ru',
     phone: '+7 (999) 999-99-99',
@@ -38,7 +41,7 @@ describe('AppController (e2e)', () => {
 
   it('GET /api/afisha/films/:id/schedule отвечает 404 на неизвестный фильм', () => {
     return request(app.getHttpServer())
-      .get('/api/afisha/films/unknown-id/schedule')
+      .get(`/api/afisha/films/${MISSING_FILM_ID}/schedule`)
       .expect(404);
   });
 
@@ -62,8 +65,9 @@ describe('AppController (e2e)', () => {
       .send(
         order([
           {
-            film: 'unknown-film',
-            session: 'unknown-session',
+            film: MISSING_FILM_ID,
+            session: MISSING_SESSION_ID,
+            daytime: '2026-01-01T10:00:00.000Z',
             row: 1,
             seat: 1,
             price: 350,
