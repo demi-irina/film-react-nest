@@ -12,20 +12,12 @@ import { PostgresFilmsRepository } from './films.postgres.repository';
     TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
       inject: ['CONFIG'],
-      useFactory: (config: AppConfig) => {
-        const url = new URL(config.database.url);
-
-        return {
-          type: 'postgres' as const,
-          host: url.hostname,
-          port: Number(url.port) || 5432,
-          database: url.pathname.replace('/', ''),
-          username: config.database.username,
-          password: config.database.password,
-          entities: [Film, Schedule],
-          synchronize: false,
-        };
-      },
+      useFactory: (config: AppConfig) => ({
+        type: 'postgres' as const,
+        url: config.database.url,
+        entities: [Film, Schedule],
+        synchronize: false,
+      }),
     }),
     TypeOrmModule.forFeature([Film, Schedule]),
   ],

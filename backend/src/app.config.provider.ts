@@ -9,8 +9,6 @@ export const configProvider = {
     database: {
       driver: config.get('DATABASE_DRIVER'),
       url: config.get('DATABASE_URL'),
-      username: config.get('DATABASE_USERNAME'),
-      password: config.get('DATABASE_PASSWORD'),
     },
   }),
 };
@@ -23,8 +21,6 @@ export interface AppConfig {
 export interface AppConfigDatabase {
   driver: string;
   url: string;
-  username: string;
-  password: string;
 }
 
 @Global()
