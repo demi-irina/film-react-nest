@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { FilmDto, FilmWithScheduleDto } from '../../films/dto/films.dto';
 import { Film, FilmDocument } from '../../films/films.schema';
 import { toFilmDto, toFilmWithScheduleDto } from './films.mongo.converter';
-import { FilmsRepository } from '../films.repository';
+import { FilmsRepository, SeatBooking } from '../films.repository';
 
 @Injectable()
 export class MongoFilmsRepository implements FilmsRepository {
@@ -23,11 +23,33 @@ export class MongoFilmsRepository implements FilmsRepository {
     return film ? toFilmWithScheduleDto(film) : null;
   }
 
-  async addTakenSeat(
-    filmId: string,
-    sessionId: string,
-    seat: string,
-  ): Promise<boolean> {
+  async bookSeats(bookings: SeatBooking[]): Promise<string | null> {
+    const booked: SeatBooking[] = [];
+
+    try {
+      for (const booking of bookings) {
+        const isBooked = await this.addTakenSeat(booking);
+
+        if (!isBooked) {
+          await this.releaseSeats(booked);
+          return booking.seat;
+        }
+
+        booked.push(booking);
+      }
+    } catch (error) {
+      await this.releaseSeats(booked);
+      throw error;
+    }
+
+    return null;
+  }
+
+  private async addTakenSeat({
+    filmId,
+    sessionId,
+    seat,
+  }: SeatBooking): Promise<boolean> {
     const result = await this.filmModel
       .updateOne(
         {
@@ -41,16 +63,26 @@ export class MongoFilmsRepository implements FilmsRepository {
     return result.modifiedCount > 0;
   }
 
-  async removeTakenSeat(
-    filmId: string,
-    sessionId: string,
-    seat: string,
-  ): Promise<void> {
+  private async removeTakenSeat({
+    filmId,
+    sessionId,
+    seat,
+  }: SeatBooking): Promise<void> {
     await this.filmModel
       .updateOne(
         { id: filmId, schedule: { $elemMatch: { id: sessionId } } },
         { $pull: { 'schedule.$.taken': seat } },
       )
       .exec();
+  }
+
+  private async releaseSeats(bookings: SeatBooking[]): Promise<void> {
+    for (const booking of bookings) {
+      try {
+        await this.removeTakenSeat(booking);
+      } catch {
+        // Откат выполняется по мере возможности
+      }
+    }
   }
 }

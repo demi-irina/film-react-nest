@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 import { FilmDto, FilmWithScheduleDto } from '../../films/dto/films.dto';
 import { Film } from '../../films/entities/film.entity';
 import { Schedule } from '../../films/entities/schedule.entity';
-import { FilmsRepository } from '../films.repository';
+import { FilmsRepository, SeatBooking } from '../films.repository';
 import { toFilmDto, toFilmWithScheduleDto } from './films.postgres.converter';
+
+class SeatTakenError extends Error {
+  constructor(readonly seat: string) {
+    super();
+  }
+}
 
 @Injectable()
 export class PostgresFilmsRepository implements FilmsRepository {
@@ -32,12 +38,38 @@ export class PostgresFilmsRepository implements FilmsRepository {
     return film ? toFilmWithScheduleDto(film) : null;
   }
 
-  async addTakenSeat(
-    filmId: string,
-    sessionId: string,
-    seat: string,
+  async bookSeats(bookings: SeatBooking[]): Promise<string | null> {
+    try {
+      return await this.scheduleRepository.manager.transaction(
+        async (manager) => {
+          for (const booking of bookings) {
+            const isBooked = await PostgresFilmsRepository.addTakenSeat(
+              manager,
+              booking,
+            );
+
+            if (!isBooked) {
+              throw new SeatTakenError(booking.seat);
+            }
+          }
+
+          return null;
+        },
+      );
+    } catch (error) {
+      if (error instanceof SeatTakenError) {
+        return error.seat;
+      }
+
+      throw error;
+    }
+  }
+
+  private static async addTakenSeat(
+    manager: EntityManager,
+    { filmId, sessionId, seat }: SeatBooking,
   ): Promise<boolean> {
-    const result = await this.scheduleRepository
+    const result = await manager
       .createQueryBuilder()
       .update(Schedule)
       .set({ taken: () => `array_append(taken, :seat)` })
@@ -48,20 +80,5 @@ export class PostgresFilmsRepository implements FilmsRepository {
       .execute();
 
     return (result.affected ?? 0) > 0;
-  }
-
-  async removeTakenSeat(
-    filmId: string,
-    sessionId: string,
-    seat: string,
-  ): Promise<void> {
-    await this.scheduleRepository
-      .createQueryBuilder()
-      .update(Schedule)
-      .set({ taken: () => `array_remove(taken, :seat)` })
-      .where('id = :sessionId')
-      .andWhere('"filmId" = :filmId')
-      .setParameters({ seat, sessionId, filmId })
-      .execute();
   }
 }
