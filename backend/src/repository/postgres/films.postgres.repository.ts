@@ -40,13 +40,10 @@ export class PostgresFilmsRepository implements FilmsRepository {
     const result = await this.scheduleRepository
       .createQueryBuilder()
       .update(Schedule)
-      .set({
-        taken: () =>
-          `CASE WHEN taken = '' THEN :seat ELSE taken || ',' || :seat END`,
-      })
+      .set({ taken: () => `array_append(taken, :seat)` })
       .where('id = :sessionId')
       .andWhere('"filmId" = :filmId')
-      .andWhere(`NOT (string_to_array(taken, ',') @> ARRAY[:seat])`)
+      .andWhere(`NOT (taken @> ARRAY[:seat])`)
       .setParameters({ seat, sessionId, filmId })
       .execute();
 
@@ -61,10 +58,7 @@ export class PostgresFilmsRepository implements FilmsRepository {
     await this.scheduleRepository
       .createQueryBuilder()
       .update(Schedule)
-      .set({
-        taken: () =>
-          `array_to_string(array_remove(string_to_array(taken, ','), :seat), ',')`,
-      })
+      .set({ taken: () => `array_remove(taken, :seat)` })
       .where('id = :sessionId')
       .andWhere('"filmId" = :filmId')
       .setParameters({ seat, sessionId, filmId })

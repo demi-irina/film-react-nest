@@ -6,13 +6,6 @@ import {
 import { Film } from '../../films/entities/film.entity';
 import { Schedule } from '../../films/entities/schedule.entity';
 
-function split(value: string): string[] {
-  return (value ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-}
-
 export function toScheduleDto(schedule: Schedule): ScheduleDto {
   return {
     id: schedule.id,
@@ -21,7 +14,7 @@ export function toScheduleDto(schedule: Schedule): ScheduleDto {
     rows: schedule.rows,
     seats: schedule.seats,
     price: schedule.price,
-    taken: split(schedule.taken),
+    taken: schedule.taken,
   };
 }
 
@@ -30,7 +23,7 @@ export function toFilmDto(film: Film): FilmDto {
     id: film.id,
     rating: film.rating,
     director: film.director,
-    tags: split(film.tags),
+    tags: film.tags,
     title: film.title,
     about: film.about,
     description: film.description,
