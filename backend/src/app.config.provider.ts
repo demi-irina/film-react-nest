@@ -6,6 +6,7 @@ export const configProvider = {
   inject: [ConfigService],
   useFactory: (config: ConfigService): AppConfig => ({
     port: Number(config.get('PORT')) || 3000,
+    logger: config.get('LOGGER') || 'dev',
     database: {
       driver: config.get('DATABASE_DRIVER'),
       url: config.get('DATABASE_URL'),
@@ -15,6 +16,7 @@ export const configProvider = {
 
 export interface AppConfig {
   port: number;
+  logger: string;
   database: AppConfigDatabase;
 }
 
