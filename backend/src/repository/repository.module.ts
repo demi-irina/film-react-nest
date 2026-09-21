@@ -12,7 +12,7 @@ const DRIVERS: Record<string, Type> = {
 export class RepositoryModule {
   static forRoot(): DynamicModule {
     const driver = process.env.DATABASE_DRIVER;
-    const module = DRIVERS[driver];
+    const module = driver ? DRIVERS[driver] : undefined;
 
     if (!module) {
       throw new Error(`Неизвестный DATABASE_DRIVER: ${driver}`);
