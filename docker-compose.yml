@@ -69,7 +69,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_DISABLE_POSTFIX: 'true'
     ports:
-      - '8080:80'
+      - '127.0.0.1:8080:80'
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     depends_on:
