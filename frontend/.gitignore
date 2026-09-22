@@ -26,3 +26,5 @@ dist-ssr
 .env
 .idea
 .vscode
+
+storybook-static

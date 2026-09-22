@@ -5,16 +5,18 @@ export const configProvider = {
   provide: 'CONFIG',
   inject: [ConfigService],
   useFactory: (config: ConfigService): AppConfig => ({
-    port: Number(config.get('PORT')) || 3000,
+    port: Number(config.get<string>('PORT')) || 3000,
+    logger: config.get<string>('LOGGER') ?? 'dev',
     database: {
-      driver: config.get('DATABASE_DRIVER'),
-      url: config.get('DATABASE_URL'),
+      driver: config.getOrThrow<string>('DATABASE_DRIVER'),
+      url: config.getOrThrow<string>('DATABASE_URL'),
     },
   }),
 };
 
 export interface AppConfig {
   port: number;
+  logger: string;
   database: AppConfigDatabase;
 }
 

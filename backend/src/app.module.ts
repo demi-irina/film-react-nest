@@ -7,6 +7,7 @@ import * as path from 'node:path';
 import { AppConfigModule } from './app.config.provider';
 import { createValidationPipe } from './app.validation.pipe';
 import { FilmsModule } from './films/films.module';
+import { LoggerModule } from './logger/logger.module';
 import { OrderModule } from './order/order.module';
 import { RepositoryModule } from './repository/repository.module';
 
@@ -17,6 +18,7 @@ import { RepositoryModule } from './repository/repository.module';
       cache: true,
     }),
     AppConfigModule,
+    LoggerModule,
     RepositoryModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: path.join(__dirname, '..', 'public'),

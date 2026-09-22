@@ -1,0 +1,94 @@
+name: film
+
+services:
+  database:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - film
+
+  backend:
+    image: ghcr.io/demi-irina/film-react-nest/backend:latest
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      LOGGER: ${LOGGER}
+      DATABASE_DRIVER: ${DATABASE_DRIVER}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3000/api/afisha/films']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - film
+
+  frontend:
+    image: ghcr.io/demi-irina/film-react-nest/frontend:latest
+    build:
+      context: ./frontend
+    restart: on-failure
+    volumes:
+      - frontend-dist:/frontend
+    networks:
+      - film
+
+  server:
+    image: ghcr.io/demi-irina/film-react-nest/nginx:latest
+    build:
+      context: ./nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - frontend-dist:/usr/share/nginx/html:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_completed_successfully
+    networks:
+      - film
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_DISABLE_POSTFIX: 'true'
+    ports:
+      - '127.0.0.1:8080:80'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - film
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+  frontend-dist:
+
+networks:
+  film:
+    driver: bridge

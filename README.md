@@ -1,36 +1,64 @@
 # FILM!
 
-## Установка
+Афиша кинотеатра с выбором сеансов, мест и оформлением заказа.
 
-### MongoDB
+Приложение доступно по адресу: http://film-project.nomorepartiessite.ru
 
-Установите MongoDB скачав дистрибутив с официального сайта или с помощью пакетного менеджера вашей ОС. Также можно воспользоваться Docker (см. ветку `feat/docker`.
+## Стек
 
-Выполните скрипт `test/mongodb_initial_stub.js` в консоли `mongo`.
+- Фронтенд: React, TypeScript, Vite
+- Бэкенд: NestJS, TypeScript
+- Инфраструктура: Docker Compose, nginx
 
-### Бэкенд
+## Запуск в Docker
 
-Перейдите в папку с исходным кодом бэкенда
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
 
-`cd backend`
+После запуска доступны:
 
-Установите зависимости (точно такие же, как в package-lock.json) помощью команд
+- приложение: http://localhost
+- pgAdmin: http://localhost:8080
 
-`npm ci` или `yarn install --frozen-lockfile`
+Переменные окружения:
 
-Создайте `.env` файл из примера `.env.example`, в нём укажите:
+| Переменная                 | Значение                                          |
+|----------------------------|---------------------------------------------------|
+| `POSTGRES_USER`            | Пользователь PostgreSQL                           |
+| `POSTGRES_PASSWORD`        | Пароль пользователя PostgreSQL                    |
+| `POSTGRES_DB`              | Название базы данных                              |
+| `DATABASE_DRIVER`          | Драйвер базы данных, для Docker только `postgres` |
+| `LOGGER`                   | Формат логов: `dev`, `json` или `tskv`            |
+| `PGADMIN_DEFAULT_EMAIL`    | Адрес электронной почты для входа в pgAdmin       |
+| `PGADMIN_DEFAULT_PASSWORD` | Пароль для входа в pgAdmin                        |
 
-* `DATABASE_DRIVER` - тип драйвера СУБД - в нашем случае это `mongodb` 
-* `DATABASE_URL` - адрес СУБД MongoDB, например `mongodb://127.0.0.1:27017/practicum`.  
+## Наполнение базы данных
 
-MongoDB должна быть установлена и запущена.
+```bash
+docker compose exec -T database psql -U prac -d prac < backend/test/prac.init.sql
+docker compose exec -T database psql -U prac -d prac < backend/test/prac.films.sql
+docker compose exec -T database psql -U prac -d prac < backend/test/prac.schedules.sql
+```
 
-Запустите бэкенд:
+## Локальная разработка
 
-`npm start:debug`
+Бэкенд и фронтенд запускаются отдельно. Подробные команды и переменные окружения описаны в их README:
 
-Для проверки отправьте тестовый запрос с помощью Postman или `curl`.
+- [Документация бэкенда](backend/README.md)
+- [Документация фронтенда](frontend/README.md)
 
+## Деплой
 
+При пуше в `main` GitHub Actions собирает и публикует Docker-образы в GHCR.
+Если настроены `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH` и `DEPLOY_SSH_KEY`, приложение также автоматически
+обновляется на сервере.
 
+Для ручного обновления:
 
+```bash
+docker compose pull
+docker compose up -d
+docker compose ps
+```
